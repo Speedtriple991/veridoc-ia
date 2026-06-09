@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\tester\\\\Carpeta DIGI storage\\\\CLAUDE PROYECTOS\\\\Veridoc IA\\\\frontend\\\\public\\\\logos\\\\gonzalezlara\")",
+      "PowerShell(New-Item -ItemType Directory -Force \"c:\\\\Users\\\\tester\\\\Carpeta DIGI storage\\\\CLAUDE PROYECTOS\\\\Veridoc IA\\\\frontend\\\\public\\\\logos\\\\viavac\")",
+      "PowerShell(Copy-Item \"c:\\\\Users\\\\tester\\\\Carpeta DIGI storage\\\\CLAUDE PROYECTOS\\\\Veridoc IA\\\\gonzalezlara\\\\logo-gonzalez-lara.svg\" \"c:\\\\Users\\\\tester\\\\Carpeta DIGI storage\\\\CLAUDE PROYECTOS\\\\Veridoc IA\\\\frontend\\\\public\\\\logos\\\\gonzalezlara\\\\logo.svg\")",
+      "PowerShell(Copy-Item \"c:\\\\Users\\\\tester\\\\Carpeta DIGI storage\\\\CLAUDE PROYECTOS\\\\Veridoc IA\\\\viavac\\\\viavac_logo_vacuum_lifting.svg.svg\" \"c:\\\\Users\\\\tester\\\\Carpeta DIGI storage\\\\CLAUDE PROYECTOS\\\\Veridoc IA\\\\frontend\\\\public\\\\logos\\\\viavac\\\\logo.svg\")"
+    ]
+  }
+}
