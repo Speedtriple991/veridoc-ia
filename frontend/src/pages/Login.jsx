@@ -33,22 +33,26 @@ export default function Login() {
         return;
       }
 
-      // 2. Obtener tenant desde profiles (join con tenants)
-      const { data: profile, error: profileError } = await supabase
+      // 2. Obtener tenant_id desde profiles
+      const { data: profile } = await supabase
         .from('profiles')
-        .select('tenant_id, tenants(key)')
+        .select('tenant_id')
         .eq('id', authData.user.id)
         .single();
 
-      if (profileError || !profile?.tenants?.key) {
-        setError('No se encontró el tenant del usuario');
-        await supabase.auth.signOut();
-        setLoading(false);
-        return;
-      }
+      if (!profile) throw new Error('No se encontró el tenant del usuario');
 
-      // 3. Guardar sesión multi-tenant en sessionStorage (igual que antes)
-      saveSession(form.email, profile.tenants.key);
+      // 3. Obtener datos del tenant
+      const { data: tenant } = await supabase
+        .from('tenants')
+        .select('*')
+        .eq('id', profile.tenant_id)
+        .single();
+
+      if (!tenant) throw new Error('No se encontró el tenant del usuario');
+
+      // 4. Guardar sesión multi-tenant en sessionStorage
+      saveSession(form.email, tenant.key);
       navigate('/dashboard');
     } catch {
       setError('Error de conexión. Inténtalo de nuevo.');
