@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { getSession } from './config/tenants.js';
+import { getSession, clearSession } from './config/tenants.js';
+import { supabase } from './lib/supabase.js';
 import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import InvoiceReview from './pages/InvoiceReview.jsx';
@@ -7,7 +9,23 @@ import InvoiceUpload from './pages/InvoiceUpload.jsx';
 import AlbaranesPage from './pages/AlbaranesPage.jsx';
 
 function PrivateRoute({ children }) {
-  return getSession() ? children : <Navigate to="/login" replace />;
+  const [ready, setReady]   = useState(false);
+  const [authed, setAuthed] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) {
+        setAuthed(true);
+      } else {
+        clearSession();
+      }
+      setReady(true);
+    });
+  }, []);
+
+  if (!ready) return null;
+  if (!authed) return <Navigate to="/login" replace />;
+  return children;
 }
 
 export default function App() {

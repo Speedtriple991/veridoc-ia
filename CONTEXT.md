@@ -2,8 +2,8 @@
 
 ## Stack técnico
 - **Frontend**: React 18 + Vite + Tailwind CSS (colores críticos con `style={}` inline, no clases Tailwind)
-- **Backend**: Node.js + Express — arranca en puerto 4000, Supabase NO conectado aún (placeholder en `.env`)
-- **Base de datos**: Supabase (pendiente — credenciales placeholder en `backend/.env`)
+- **Backend**: Node.js + Express — arranca en puerto 4000 (sin BD propia — auth delegada a Supabase)
+- **Base de datos**: Supabase — auth activa, tablas `profiles` y `tenants` en uso
 - **IA**: Claude API llamada directamente desde el browser (sin proxy backend)
 
 ## Diseño / Design system
@@ -58,14 +58,31 @@
 - Dashboard lee `tenant.exportFormats` y mapea a `EXPORT_BTNS` para renderizar los botones del footer
 - El botón "Exportar validadas" del topbar usa `tenant.exportFormats[0]` (formato primario)
 
-## Flujo de autenticación demo
+## Flujo de autenticación (Supabase Auth)
 
 1. Usuario entra en `localhost:5173` → pantalla de login genérica (solo wordmark Veridoc, sin logos de cliente)
-2. Introduce email + contraseña → `DEMO_USERS` en `Login.jsx` detecta el tenant por email
-3. `saveSession(email, tenantKey)` guarda `{ email, tenant, nombre }` en `sessionStorage` clave `vd_session`
-4. `navigate('/dashboard')` — sin parámetros en URL
-5. Dashboard lee `getSession()` + `getTenant()` → muestra branding del tenant correcto
-6. Las credenciales demo NO aparecen en pantalla
+2. Introduce email + contraseña → `supabase.auth.signInWithPassword()` valida contra Supabase Auth
+3. Si ok → consulta `profiles` con join a `tenants` para obtener `tenants.key` (`gonzalezlara` / `solvinco` / `viavac`)
+4. `saveSession(email, tenantKey)` guarda `{ email, tenant, nombre }` en `sessionStorage` clave `vd_session`
+5. `navigate('/dashboard')` — sin parámetros en URL
+6. Dashboard lee `getSession()` + `getTenant()` → muestra branding del tenant correcto
+7. `PrivateRoute` en `App.jsx` verifica `supabase.auth.getSession()` en cada montaje — redirige a `/login` si el token expiró
+8. Logout: `supabase.auth.signOut()` + `clearSession()` → `/login`
+
+### Schema Supabase esperado
+```sql
+-- profiles
+id          uuid  PRIMARY KEY REFERENCES auth.users(id)
+tenant_id   uuid  REFERENCES tenants(id)
+
+-- tenants
+id    uuid  PRIMARY KEY
+key   text  -- 'gonzalezlara' | 'solvinco' | 'viavac'
+```
+
+### Cliente Supabase
+- `frontend/src/lib/supabase.js` — `createClient(VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)`
+- Variables en `frontend/.env` (no commitear) y en Vercel environment variables
 
 ## Layout de Dashboard
 
@@ -137,7 +154,7 @@
 | Persistencia localStorage por tenant | ✅ | `Dashboard.jsx` + `UploadModal.jsx` |
 | Vista revisión dividida PDF + campos editables | ✅ | `frontend/src/pages/InvoiceReview.jsx` |
 | Backend Express (arranca, sin BD) | ⚠️ parcial | `backend/src/index.js` (puerto 4000) |
-| Supabase auth + base de datos | ❌ pendiente | — |
+| Supabase auth + base de datos | ✅ | `frontend/src/lib/supabase.js` + `Login.jsx` + `App.jsx` |
 | Exportar XML AlbaIBS (gonzalezlara) | ✅ | `frontend/src/services/exporters/xmlAlbaIbs.js` |
 | Exportar Excel myGESTIÓN (solvinco, viavac) | ✅ | `frontend/src/services/exporters/excelMyGestion.js` |
 | Exportar Excel genérico (gonzalezlara secundario) | ✅ | `frontend/src/services/exporters/excelMyGestion.js` |

@@ -14,6 +14,7 @@ import {
 } from '@tabler/icons-react';
 import api from '../api/axios.js';
 import { getTenant, getSession, clearSession } from '../config/tenants.js';
+import { supabase } from '../lib/supabase.js';
 import { TenantLogo } from './Login.jsx';
 import UploadModal from '../components/UploadModal.jsx';
 import { exportXmlAlbaIbs }                        from '../services/exporters/xmlAlbaIbs.js';
@@ -225,7 +226,7 @@ export default function Dashboard() {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
           <button
             title="Cerrar sesión"
-            onClick={() => { clearSession(); navigate('/login'); }}
+            onClick={async () => { await supabase.auth.signOut(); clearSession(); navigate('/login'); }}
             style={{
               width: 30, height: 30, borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',

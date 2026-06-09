@@ -1,15 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveSession } from '../config/tenants.js';
+import { supabase } from '../lib/supabase.js';
 
 const T = { syne: 'Syne, sans-serif', dm: '"DM Sans", sans-serif' };
 
-// ─── demo credentials — tenant se detecta por email ───────────────────────────
-const DEMO_USERS = {
-  'demo@gonzalezlara.com': { password: 'demo2026', tenant: 'gonzalezlara' },
-  'demo@solvinco.com':     { password: 'demo2026', tenant: 'solvinco'     },
-  'demo@viavac.com':       { password: 'demo2026', tenant: 'viavac'       },
-};
 
 // ─── Login ────────────────────────────────────────────────────────────────────
 export default function Login() {
@@ -25,18 +20,40 @@ export default function Login() {
     setError('');
     setLoading(true);
 
-    await new Promise((r) => setTimeout(r, 700));
+    try {
+      // 1. Autenticar con Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email:    form.email.toLowerCase().trim(),
+        password: form.password,
+      });
 
-    const user = DEMO_USERS[form.email.toLowerCase().trim()];
-    if (!user || user.password !== form.password) {
-      setError('Credenciales incorrectas');
+      if (authError) {
+        setError('Credenciales incorrectas');
+        setLoading(false);
+        return;
+      }
+
+      // 2. Obtener tenant desde profiles (join con tenants)
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('tenant_id, tenants(key)')
+        .eq('id', authData.user.id)
+        .single();
+
+      if (profileError || !profile?.tenants?.key) {
+        setError('No se encontró el tenant del usuario');
+        await supabase.auth.signOut();
+        setLoading(false);
+        return;
+      }
+
+      // 3. Guardar sesión multi-tenant en sessionStorage (igual que antes)
+      saveSession(form.email, profile.tenants.key);
+      navigate('/dashboard');
+    } catch {
+      setError('Error de conexión. Inténtalo de nuevo.');
       setLoading(false);
-      return;
     }
-
-    // Tenant detectado por email → guardado en sessionStorage
-    saveSession(form.email, user.tenant);
-    navigate('/dashboard');
   };
 
   return (
