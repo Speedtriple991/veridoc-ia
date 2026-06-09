@@ -181,6 +181,7 @@ tenant_id   uuid  REFERENCES tenants(id)
 | Fallback % IVA calculado client-side si Claude da 0/null | ✅ | `InvoiceReview.jsx` → `setFields` IIFE |
 | Login Supabase Auth en producción (veridoc-ia.vercel.app) | ✅ | `Login.jsx` + `frontend/src/lib/supabase.js` |
 | Logos tenant en repo y CDN Vercel | ✅ | `frontend/public/logos/` |
+| Dashboard muestra nombre de empresa en saludo | ✅ | `Dashboard.jsx` → `tenant.nombre` |
 | Migrar facturas localStorage → Supabase tabla `invoices` | ❌ pendiente | — |
 | PDFs → Supabase Storage (en lugar de base64 en localStorage) | ❌ pendiente | — |
 
