@@ -58,31 +58,41 @@
 - Dashboard lee `tenant.exportFormats` y mapea a `EXPORT_BTNS` para renderizar los botones del footer
 - El botón "Exportar validadas" del topbar usa `tenant.exportFormats[0]` (formato primario)
 
-## Flujo de autenticación (Supabase Auth)
+## Producción
 
-1. Usuario entra en `localhost:5173` → pantalla de login genérica (solo wordmark Veridoc, sin logos de cliente)
-2. Introduce email + contraseña → `supabase.auth.signInWithPassword()` valida contra Supabase Auth
-3. Si ok → consulta `profiles` con join a `tenants` para obtener `tenants.key` (`gonzalezlara` / `solvinco` / `viavac`)
-4. `saveSession(email, tenantKey)` guarda `{ email, tenant, nombre }` en `sessionStorage` clave `vd_session`
-5. `navigate('/dashboard')` — sin parámetros en URL
-6. Dashboard lee `getSession()` + `getTenant()` → muestra branding del tenant correcto
-7. `PrivateRoute` en `App.jsx` verifica `supabase.auth.getSession()` en cada montaje — redirige a `/login` si el token expiró
-8. Logout: `supabase.auth.signOut()` + `clearSession()` → `/login`
+- **URL**: `https://veridoc-ia.vercel.app`
+- **Repositorio**: `https://github.com/Speedtriple991/veridoc-ia`
+- **Variables Vercel**: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_ANTHROPIC_API_KEY`
+- **Root Directory en Vercel**: `frontend`
 
-### Schema Supabase esperado
+## Supabase
+
+- **Proyecto**: Veridoc ai
+- **URL**: `https://bfyqjcfldnktvovvnxiz.supabase.co`
+- **Cliente**: `frontend/src/lib/supabase.js` — `createClient(VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)` con fallback hardcodeado
+
+### Tablas
 ```sql
--- profiles
+-- tenants (3 registros)
+id    uuid  PRIMARY KEY
+slug  text  -- 'gonzalezlara' | 'solvinco' | 'viavac'
+-- (otros campos de configuración del tenant)
+
+-- profiles (3 registros, RLS activo)
 id          uuid  PRIMARY KEY REFERENCES auth.users(id)
 tenant_id   uuid  REFERENCES tenants(id)
-
--- tenants
-id    uuid  PRIMARY KEY
-key   text  -- 'gonzalezlara' | 'solvinco' | 'viavac'
 ```
 
-### Cliente Supabase
-- `frontend/src/lib/supabase.js` — `createClient(VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)`
-- Variables en `frontend/.env` (no commitear) y en Vercel environment variables
+## Flujo de autenticación (Supabase Auth) ✅ en producción
+
+1. Usuario entra en `veridoc-ia.vercel.app` → pantalla de login genérica
+2. `supabase.auth.signInWithPassword({ email, password })` valida contra Supabase Auth
+3. Query `profiles` por `id = user.id` → obtiene `tenant_id`
+4. Query `tenants` por `id = tenant_id` → obtiene `tenant.slug`
+5. `saveSession(user.email, tenant.slug)` guarda `{ email, tenant, nombre }` en `sessionStorage`
+6. `navigate('/dashboard')` — Dashboard lee `getSession()` + `getTenant()` → branding correcto
+7. `PrivateRoute` en `App.jsx` verifica `supabase.auth.getSession()` en cada montaje
+8. Logout: `supabase.auth.signOut()` + `clearSession()` → `/login`
 
 ## Layout de Dashboard
 
@@ -133,19 +143,22 @@ key   text  -- 'gonzalezlara' | 'solvinco' | 'viavac'
 - En el exportador CSV myGESTIÓN: `calcPctIva(d)` usa `porcentaje_iva` si `!= null && !== 0`, si no calcula desde `importe_iva / base_imponible`
 - Al guardar: `parseInt(fields.porcentaje_iva, 10)` → `extracted_data.porcentaje_iva` (entero o null)
 
-## Persistencia de datos (localStorage)
+## Persistencia de datos (localStorage) — pendiente migración a Supabase
+
 - Clave por tenant: `veridoc_invoices_[tenantKey]`
 - Cada factura incluye `pdf_base64` para mostrar el PDF en la vista de revisión
 - Sin datos de muestra — estado vacío hasta primera extracción real
 - `deleteInvoice(id)` pide confirmación, filtra y persiste
+- **Pendiente**: migrar facturas de localStorage a tabla `invoices` en Supabase
+- **Pendiente**: subir PDFs a Supabase Storage en lugar de guardar base64 en localStorage
 
 ## Estado de módulos
 
 | Módulo | Estado | Archivo |
 |---|---|---|
 | Login genérico (sin branding cliente) | ✅ | `frontend/src/pages/Login.jsx` |
-| Detección de tenant por email | ✅ | `Login.jsx` → `DEMO_USERS` |
-| 3 tenants configurados con logos | ✅ | `frontend/src/config/tenants.js` |
+| Detección de tenant por Supabase (profiles + tenants) | ✅ | `Login.jsx` → Supabase queries |
+| 3 tenants configurados con logos | ✅ | `frontend/src/config/tenants.js` + `public/logos/` |
 | Barra superior identidad cliente | ✅ | `Dashboard.jsx` (top identity bar) |
 | Dashboard (sidebar + topbar + lista) | ✅ | `frontend/src/pages/Dashboard.jsx` |
 | Borrar factura (con confirmación) | ✅ | `Dashboard.jsx` → `deleteInvoice()` |
@@ -166,6 +179,10 @@ key   text  -- 'gonzalezlara' | 'solvinco' | 'viavac'
 | Exportación con signo negativo para abonos | ✅ | `xmlAlbaIbs.js` `signed()` / `excelMyGestion.js` `signedNum()` |
 | Campo % IVA condicional (solo tenants myGESTIÓN) | ✅ | `InvoiceReview.jsx` → `tenant.erp === 'mygestion'` |
 | Fallback % IVA calculado client-side si Claude da 0/null | ✅ | `InvoiceReview.jsx` → `setFields` IIFE |
+| Login Supabase Auth en producción (veridoc-ia.vercel.app) | ✅ | `Login.jsx` + `frontend/src/lib/supabase.js` |
+| Logos tenant en repo y CDN Vercel | ✅ | `frontend/public/logos/` |
+| Migrar facturas localStorage → Supabase tabla `invoices` | ❌ pendiente | — |
+| PDFs → Supabase Storage (en lugar de base64 en localStorage) | ❌ pendiente | — |
 
 ## Rutas de la app
 
