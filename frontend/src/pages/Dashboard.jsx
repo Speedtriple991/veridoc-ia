@@ -140,7 +140,7 @@ export default function Dashboard() {
       return i.supplier_name?.toLowerCase().includes(q) || i.original_filename?.toLowerCase().includes(q);
     });
 
-  const firstName     = session?.email?.split('@')[0] ?? 'usuario';
+  const firstName     = tenant.nombre ?? session?.email?.split('@')[0] ?? 'usuario';
   const avatarInitials = (session?.email ?? 'MA').slice(0, 2).toUpperCase();
 
   return (
