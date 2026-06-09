@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 130" width="100%" height="100%">
+  <rect x="15" y="15" width="490" height="100" rx="50" ry="50" fill="#000000" />
+  
+  <text x="260" y="65" 
+        fill="#FFFFFF" 
+        font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif" 
+        font-size="36" 
+        font-weight="bold" 
+        letter-spacing="4" 
+        text-anchor="middle" 
+        dominant-baseline="central">GONZÁLEZ LARA</text>
+</svg>
