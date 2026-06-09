@@ -28,7 +28,7 @@ export default function Login() {
       });
 
       if (authError) {
-        setError('Credenciales incorrectas');
+        setError(authError.message);
         setLoading(false);
         return;
       }
