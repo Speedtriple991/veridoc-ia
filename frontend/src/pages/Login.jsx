@@ -52,7 +52,7 @@ export default function Login() {
       if (!tenant) throw new Error('No se encontró el tenant del usuario');
 
       // 4. Guardar sesión multi-tenant en sessionStorage
-      saveSession(form.email, tenant.key);
+      saveSession(authData.user.email, tenant.slug);
       navigate('/dashboard');
     } catch {
       setError('Error de conexión. Inténtalo de nuevo.');
